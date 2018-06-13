@@ -1,6 +1,7 @@
 #include "extensions/filters/common/rbac/matchers.h"
 
 #include "common/common/assert.h"
+#include "common/protobuf/utility.h"
 
 namespace Envoy {
 namespace Extensions {
@@ -22,6 +23,8 @@ MatcherConstSharedPtr Matcher::create(const envoy::config::rbac::v2alpha::Permis
     return std::make_shared<const PortMatcher>(permission.destination_port());
   case envoy::config::rbac::v2alpha::Permission::RuleCase::kAny:
     return std::make_shared<const AlwaysMatcher>();
+  case envoy::config::rbac::v2alpha::Permission::RuleCase::kMetadata:
+    return std::make_shared<const MetadataMatcher>(permission.metadata());
   default:
     NOT_REACHED;
   }
@@ -41,6 +44,8 @@ MatcherConstSharedPtr Matcher::create(const envoy::config::rbac::v2alpha::Princi
     return std::make_shared<const HeaderMatcher>(principal.header());
   case envoy::config::rbac::v2alpha::Principal::IdentifierCase::kAny:
     return std::make_shared<const AlwaysMatcher>();
+  case envoy::config::rbac::v2alpha::Principal::IdentifierCase::kMetadata:
+    return std::make_shared<const MetadataMatcher>(principal.metadata());
   default:
     NOT_REACHED;
   }
@@ -59,9 +64,10 @@ AndMatcher::AndMatcher(const envoy::config::rbac::v2alpha::Principal_Set& set) {
 }
 
 bool AndMatcher::matches(const Network::Connection& connection,
-                         const Envoy::Http::HeaderMap& headers) const {
+                         const Envoy::Http::HeaderMap& headers,
+                         const envoy::api::v2::core::Metadata& metadata) const {
   for (const auto& matcher : matchers_) {
-    if (!matcher->matches(connection, headers)) {
+    if (!matcher->matches(connection, headers, metadata)) {
       return false;
     }
   }
@@ -84,9 +90,10 @@ OrMatcher::OrMatcher(
 }
 
 bool OrMatcher::matches(const Network::Connection& connection,
-                        const Envoy::Http::HeaderMap& headers) const {
+                        const Envoy::Http::HeaderMap& headers,
+                        const envoy::api::v2::core::Metadata& metadata) const {
   for (const auto& matcher : matchers_) {
-    if (matcher->matches(connection, headers)) {
+    if (matcher->matches(connection, headers, metadata)) {
       return true;
     }
   }
@@ -95,12 +102,14 @@ bool OrMatcher::matches(const Network::Connection& connection,
 }
 
 bool HeaderMatcher::matches(const Network::Connection&,
-                            const Envoy::Http::HeaderMap& headers) const {
+                            const Envoy::Http::HeaderMap& headers,
+                            const envoy::api::v2::core::Metadata&) const {
   return Envoy::Http::HeaderUtility::matchHeaders(headers, header_);
 }
 
 bool IPMatcher::matches(const Network::Connection& connection,
-                        const Envoy::Http::HeaderMap&) const {
+                        const Envoy::Http::HeaderMap&,
+                        const envoy::api::v2::core::Metadata&) const {
   const Envoy::Network::Address::InstanceConstSharedPtr& ip =
       destination_ ? connection.localAddress() : connection.remoteAddress();
 
@@ -108,13 +117,15 @@ bool IPMatcher::matches(const Network::Connection& connection,
 }
 
 bool PortMatcher::matches(const Network::Connection& connection,
-                          const Envoy::Http::HeaderMap&) const {
+                          const Envoy::Http::HeaderMap&,
+                          const envoy::api::v2::core::Metadata&) const {
   const Envoy::Network::Address::Ip* ip = connection.localAddress().get()->ip();
   return ip && ip->port() == port_;
 }
 
 bool AuthenticatedMatcher::matches(const Network::Connection& connection,
-                                   const Envoy::Http::HeaderMap&) const {
+                                   const Envoy::Http::HeaderMap&,
+                                   const envoy::api::v2::core::Metadata&) const {
   const auto* ssl = connection.ssl();
   if (!ssl) { // connection was not authenticated
     return false;
@@ -128,9 +139,34 @@ bool AuthenticatedMatcher::matches(const Network::Connection& connection,
   return principal == name_;
 }
 
+bool MetadataMatcher::matches(const Network::Connection& connection,
+                              const Envoy::Http::HeaderMap&,
+                              const envoy::api::v2::core::Metadata& metadata) const {
+  for (const auto& pair1 : metadata_.metadata().filter_metadata()) {
+    const auto pair2 = metadata.filter_metadata().find(pair1.first);
+    if (pair2 == metadata.filter_metadata().end()) {
+      return false;
+    }
+
+    uint32_t option = ValueUtil::Option::TreatStructAsSet;
+    if (metadata_.allow_prefix_suffix_string()) {
+      option |= ValueUtil::Option::AllowPrefixSuffixString;
+    }
+    if (metadata_.treat_list_as_set()) {
+      option |= ValueUtil::Option::TreatListAsSet;
+    }
+    if (!StructUtil::subset(pair1.second, pair2->second, option)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 bool PolicyMatcher::matches(const Network::Connection& connection,
-                            const Envoy::Http::HeaderMap& headers) const {
-  return permissions_.matches(connection, headers) && principals_.matches(connection, headers);
+                            const Envoy::Http::HeaderMap& headers,
+                            const envoy::api::v2::core::Metadata& metadata) const {
+  return permissions_.matches(connection, headers, metadata)
+      && principals_.matches(connection, headers, metadata);
 }
 
 } // namespace RBAC

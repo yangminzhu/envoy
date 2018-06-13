@@ -33,7 +33,8 @@ public:
    *                   there are none headers available.
    */
   virtual bool matches(const Network::Connection& connection,
-                       const Envoy::Http::HeaderMap& headers) const PURE;
+                       const Envoy::Http::HeaderMap& headers,
+                       const envoy::api::v2::core::Metadata& metadata) const PURE;
 
   /**
    * Creates a shared instance of a matcher based off the rules defined in the Permission config
@@ -53,7 +54,8 @@ public:
  */
 class AlwaysMatcher : public Matcher {
 public:
-  bool matches(const Network::Connection&, const Envoy::Http::HeaderMap&) const override {
+  bool matches(const Network::Connection&, const Envoy::Http::HeaderMap&,
+               const envoy::api::v2::core::Metadata&) const override {
     return true;
   }
 };
@@ -68,7 +70,8 @@ public:
   AndMatcher(const envoy::config::rbac::v2alpha::Principal_Set& ids);
 
   bool matches(const Network::Connection& connection,
-               const Envoy::Http::HeaderMap& headers) const override;
+               const Envoy::Http::HeaderMap& headers,
+               const envoy::api::v2::core::Metadata&) const override;
 
 private:
   std::vector<MatcherConstSharedPtr> matchers_;
@@ -86,7 +89,8 @@ public:
   OrMatcher(const Protobuf::RepeatedPtrField<::envoy::config::rbac::v2alpha::Principal>& ids);
 
   bool matches(const Network::Connection& connection,
-               const Envoy::Http::HeaderMap& headers) const override;
+               const Envoy::Http::HeaderMap& headers,
+               const envoy::api::v2::core::Metadata&) const override;
 
 private:
   std::vector<MatcherConstSharedPtr> matchers_;
@@ -101,7 +105,8 @@ public:
   HeaderMatcher(const envoy::api::v2::route::HeaderMatcher& matcher) : header_(matcher) {}
 
   bool matches(const Network::Connection& connection,
-               const Envoy::Http::HeaderMap& headers) const override;
+               const Envoy::Http::HeaderMap& headers,
+               const envoy::api::v2::core::Metadata&) const override;
 
 private:
   const Envoy::Http::HeaderUtility::HeaderData header_;
@@ -117,7 +122,8 @@ public:
       : range_(Network::Address::CidrRange::create(range)), destination_(destination) {}
 
   bool matches(const Network::Connection& connection,
-               const Envoy::Http::HeaderMap& headers) const override;
+               const Envoy::Http::HeaderMap& headers,
+               const envoy::api::v2::core::Metadata&) const override;
 
 private:
   const Network::Address::CidrRange range_;
@@ -132,7 +138,8 @@ public:
   PortMatcher(const uint32_t port) : port_(port) {}
 
   bool matches(const Network::Connection& connection,
-               const Envoy::Http::HeaderMap& headers) const override;
+               const Envoy::Http::HeaderMap& headers,
+               const envoy::api::v2::core::Metadata&) const override;
 
 private:
   const uint32_t port_;
@@ -148,7 +155,8 @@ public:
       : name_(auth.name()) {}
 
   bool matches(const Network::Connection& connection,
-               const Envoy::Http::HeaderMap& headers) const override;
+               const Envoy::Http::HeaderMap& headers,
+               const envoy::api::v2::core::Metadata&) const override;
 
 private:
   const std::string name_;
@@ -164,11 +172,25 @@ public:
       : permissions_(policy.permissions()), principals_(policy.principals()) {}
 
   bool matches(const Network::Connection& connection,
-               const Envoy::Http::HeaderMap& headers) const override;
+               const Envoy::Http::HeaderMap& headers,
+               const envoy::api::v2::core::Metadata&) const override;
 
 private:
   const OrMatcher permissions_;
   const OrMatcher principals_;
+};
+
+class MetadataMatcher : public Matcher {
+public:
+  MetadataMatcher(const envoy::config::rbac::v2alpha::Metadata& metadata)
+      : metadata_(metadata) {}
+
+  bool matches(const Network::Connection& connection,
+               const Envoy::Http::HeaderMap& headers,
+               const envoy::api::v2::core::Metadata& metadata) const override;
+
+private:
+  const envoy::config::rbac::v2alpha::Metadata metadata_;
 };
 
 } // namespace RBAC

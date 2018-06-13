@@ -44,7 +44,8 @@ Http::FilterHeadersStatus RoleBasedAccessControlFilter::decodeHeaders(Http::Head
   const Filters::Common::RBAC::RoleBasedAccessControlEngine& engine =
       config_->engine(callbacks_->route());
 
-  if (engine.allowed(*callbacks_->connection(), headers)) {
+  if (engine.allowed(*callbacks_->connection(), headers,
+                     callbacks_->requestInfo().dynamicMetadata())) {
     config_->stats().allowed_.inc();
     return Http::FilterHeadersStatus::Continue;
   }

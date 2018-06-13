@@ -23,9 +23,11 @@ public:
    * @param connection the downstream connection used to identify the action/principal.
    * @param headers    the headers of the incoming request used to identify the action/principal. An
    *                   empty map should be used if there are no headers available.
+   * @param metadata   the metadata with additional information about the identity or principal.
    */
   virtual bool allowed(const Network::Connection& connection,
-                       const Envoy::Http::HeaderMap& headers) const PURE;
+                       const Envoy::Http::HeaderMap& headers,
+                       const envoy::api::v2::core::Metadata& metadata) const PURE;
 };
 
 } // namespace RBAC

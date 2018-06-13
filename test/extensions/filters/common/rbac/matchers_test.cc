@@ -22,8 +22,9 @@ namespace {
 
 void checkMatcher(const RBAC::Matcher& matcher, bool expected,
                   const Envoy::Network::Connection& connection = Envoy::Network::MockConnection(),
-                  const Envoy::Http::HeaderMap& headers = Envoy::Http::HeaderMapImpl()) {
-  EXPECT_EQ(expected, matcher.matches(connection, headers));
+                  const Envoy::Http::HeaderMap& headers = Envoy::Http::HeaderMapImpl(),
+                  const envoy::api::v2::core::Metadata& metadata = envoy::api::v2::core::Metadata()) {
+  EXPECT_EQ(expected, matcher.matches(connection, headers, metadata));
 }
 
 TEST(AlwaysMatcher, AlwaysMatches) { checkMatcher(RBAC::AlwaysMatcher(), true); }
@@ -208,6 +209,144 @@ TEST(AuthenticatedMatcher, NoSSL) {
   Envoy::Network::MockConnection conn;
   EXPECT_CALL(Const(conn), ssl()).WillOnce(Return(nullptr));
   checkMatcher(AuthenticatedMatcher({}), false, conn);
+}
+
+TEST(MetadataMatcher, DefaultOption) {
+  Envoy::Network::MockConnection conn;
+  Envoy::Http::HeaderMapImpl header;
+
+  auto config_metadata = TestUtility::parseYaml<envoy::config::rbac::v2alpha::Metadata>(R"EOF(
+    metadata:
+      filter_metadata:
+        envoy.rbac_filter:
+          fields:
+            version:
+              string_value: v1
+            labels:
+              list_value:
+                values:
+                  - string_value: a1
+                  - string_value: a2
+  )EOF");
+  auto dynamic_metadata = TestUtility::parseYaml<envoy::api::v2::core::Metadata>(R"EOF(
+    filter_metadata:
+      envoy.rbac_filter:
+        fields:
+          version:
+            string_value: v1
+          labels:
+            list_value:
+              values:
+                - string_value: a1
+                - string_value: a2
+      envoy.another_filter:
+        fields:
+          data:
+            string_value: xyz
+  )EOF");
+
+  checkMatcher(MetadataMatcher(config_metadata), true, conn, header, dynamic_metadata);
+}
+
+TEST(MetadataMatcher, AllowPrefixSuffixString) {
+  Envoy::Network::MockConnection conn;
+  Envoy::Http::HeaderMapImpl header;
+
+  auto config_metadata = TestUtility::parseYaml<envoy::config::rbac::v2alpha::Metadata>(R"EOF(
+    metadata:
+      filter_metadata:
+        envoy.rbac_filter:
+          fields:
+            version:
+              string_value: 'v1.*'
+  )EOF");
+  auto dynamic_metadata = TestUtility::parseYaml<envoy::api::v2::core::Metadata>(R"EOF(
+    filter_metadata:
+      envoy.rbac_filter:
+        fields:
+          version:
+            string_value: v1.10
+  )EOF");
+
+  checkMatcher(MetadataMatcher(config_metadata), false, conn, header, dynamic_metadata);
+
+  config_metadata.set_allow_prefix_suffix_string(true);
+  checkMatcher(MetadataMatcher(config_metadata), true, conn, header, dynamic_metadata);
+}
+
+TEST(MetadataMatcher, TreatListAsSet) {
+  Envoy::Network::MockConnection conn;
+  Envoy::Http::HeaderMapImpl header;
+
+  auto config_metadata = TestUtility::parseYaml<envoy::config::rbac::v2alpha::Metadata>(R"EOF(
+    metadata:
+      filter_metadata:
+        envoy.rbac_filter:
+          fields:
+            labels:
+              list_value:
+                values:
+                  - string_value: a1
+                  - string_value: a2
+  )EOF");
+  auto dynamic_metadata = TestUtility::parseYaml<envoy::api::v2::core::Metadata>(R"EOF(
+    filter_metadata:
+      envoy.rbac_filter:
+        fields:
+          labels:
+            list_value:
+              values:
+                - string_value: c1
+                - string_value: a2
+                - string_value: a1
+  )EOF");
+
+  checkMatcher(MetadataMatcher(config_metadata), false, conn, header, dynamic_metadata);
+
+  config_metadata.set_treat_list_as_set(true);
+  checkMatcher(MetadataMatcher(config_metadata), true, conn, header, dynamic_metadata);
+}
+
+TEST(MetadataMatcher, AllowPrefixSuffixStringAndTreatListAsSet) {
+  Envoy::Network::MockConnection conn;
+  Envoy::Http::HeaderMapImpl header;
+
+  auto config_metadata = TestUtility::parseYaml<envoy::config::rbac::v2alpha::Metadata>(R"EOF(
+    metadata:
+      filter_metadata:
+        envoy.rbac_filter:
+          fields:
+            labels:
+              list_value:
+                values:
+                  - string_value: 'a1.*'
+                  - string_value: '*.a2'
+  )EOF");
+  auto dynamic_metadata = TestUtility::parseYaml<envoy::api::v2::core::Metadata>(R"EOF(
+    filter_metadata:
+      envoy.rbac_filter:
+        fields:
+          labels:
+            list_value:
+              values:
+                - string_value: c1
+                - string_value: xx.a2
+                - string_value: a1.xx
+  )EOF");
+
+  checkMatcher(MetadataMatcher(config_metadata), false, conn, header, dynamic_metadata);
+
+  config_metadata.set_allow_prefix_suffix_string(true);
+  config_metadata.set_treat_list_as_set(false);
+  checkMatcher(MetadataMatcher(config_metadata), false, conn, header, dynamic_metadata);
+
+  config_metadata.set_allow_prefix_suffix_string(false);
+  config_metadata.set_treat_list_as_set(true);
+  checkMatcher(MetadataMatcher(config_metadata), false, conn, header, dynamic_metadata);
+
+  config_metadata.set_allow_prefix_suffix_string(true);
+  config_metadata.set_treat_list_as_set(true);
+  checkMatcher(MetadataMatcher(config_metadata), true, conn, header, dynamic_metadata);
 }
 
 TEST(PolicyMatcher, PolicyMatcher) {

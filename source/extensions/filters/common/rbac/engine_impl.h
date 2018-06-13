@@ -19,7 +19,8 @@ public:
       const envoy::config::filter::http::rbac::v2::RBACPerRoute& per_route_config);
 
   bool allowed(const Network::Connection& connection,
-               const Envoy::Http::HeaderMap& headers) const override;
+               const Envoy::Http::HeaderMap& headers,
+               const envoy::api::v2::core::Metadata& metadata) const override;
 
 private:
   // Indicates that the engine will not evaluate an action and just return true for calls to

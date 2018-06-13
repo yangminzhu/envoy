@@ -243,15 +243,59 @@ public:
 
 class ValueUtil {
 public:
+  // Option to control how to compare string, list and struct value.
+  struct Option {
+    // String and List are equal if and only if they are exactly the same.
+    static const uint32_t Default = 0x0;
+
+    // String value is equal if they are the same or if v2 has the prefix/suffix specifed in v1 that
+    // begins/ends with a '*'.
+    //
+    // For example:
+    //  v1 of value "*abc" is equal to v2 of value "xyzabc"
+    //  v1 of value "abc*" is equal to v2 of value "abcxyz"
+    static const uint32_t AllowPrefixSuffixString = 0x1;
+
+    // List value is equal if v1 is a subset of v2. This means every elements in v1 must also be
+    // found in v2 while the order doesn't matter.
+    //
+    // For example:
+    //  v1 of value ["a", "b"] is equal to v2 of value ["c", "b", "a"]
+    static const uint32_t TreatListAsSet = 0x2;
+
+    // Struct value is equal if v1 is a subset of v2. This means every elements in v1 must also be
+    // found in v2 while the order doesn't matter.
+    //
+    // For example:
+    // v1 of value {"x": 1, "y": 2} is equal to v2 of value {"x": 1, "z": 3, "y": 2}.
+    static const uint32_t TreatStructAsSet = 0x4;
+  };
+
   static std::size_t hash(const ProtobufWkt::Value& value) { return MessageUtil::hash(value); }
 
   /**
    * Compare two ProtobufWkt::Values for equality.
    * @param v1 message of type type.googleapis.com/google.protobuf.Value
    * @param v2 message of type type.googleapis.com/google.protobuf.Value
+   * @param option option to control how to compare string and list value
    * @return true if v1 and v2 are identical
    */
-  static bool equal(const ProtobufWkt::Value& v1, const ProtobufWkt::Value& v2);
+  static bool equal(const ProtobufWkt::Value& v1, const ProtobufWkt::Value& v2,
+                    uint32_t option = ValueUtil::Option::Default);
+};
+
+class StructUtil {
+ public:
+  /**
+   * Compare two ProtobufWkt::Values for subset relationship.
+   * @param v1 message of type type.googleapis.com/google.protobuf.Value
+   * @param v2 message of type type.googleapis.com/google.protobuf.Value
+   * @param option option to control how to compare string and list value
+   * @return true if v1 is a subset of v2. This means every elements in v1 must also be
+   *         found in v2 while the order doesn't matter.
+   */
+  static bool subset(const ProtobufWkt::Struct& v1, const ProtobufWkt::Struct& v2,
+                     uint32_t option = ValueUtil::Option::Default);
 };
 
 /**

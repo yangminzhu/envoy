@@ -25,15 +25,16 @@ RoleBasedAccessControlEngineImpl::RoleBasedAccessControlEngineImpl(
     const envoy::config::filter::http::rbac::v2::RBACPerRoute& per_route_config)
     : RoleBasedAccessControlEngineImpl(per_route_config.rbac(), per_route_config.disabled()) {}
 
-bool RoleBasedAccessControlEngineImpl::allowed(const Network::Connection& connection,
-                                               const Envoy::Http::HeaderMap& headers) const {
+bool RoleBasedAccessControlEngineImpl::allowed(
+    const Network::Connection& connection, const Envoy::Http::HeaderMap& headers,
+    const envoy::api::v2::core::Metadata& metadata) const {
   if (engine_disabled_) {
     return true;
   }
 
   bool matched = false;
   for (const auto& policy : policies_) {
-    if (policy.matches(connection, headers)) {
+    if (policy.matches(connection, headers, metadata)) {
       matched = true;
       break;
     }

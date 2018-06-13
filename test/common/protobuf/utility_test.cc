@@ -101,6 +101,45 @@ TEST(UtilityTest, ValueUtilEqual_StringValues) {
   EXPECT_FALSE(ValueUtil::equal(v1, v3));
 }
 
+TEST(UtilityTest, ValueUtilEqual_StringValues_AllowPrefixSuffixString) {
+  ProtobufWkt::Value v1, v2, v3, v4, t1, t2, t3, t4;
+  uint32_t option = ValueUtil::Option::AllowPrefixSuffixString;
+  v1.set_string_value("*abc");
+  v2.set_string_value("abc*");
+  v3.set_string_value("*abc*");
+  v4.set_string_value("abc**");
+
+  t1.set_string_value("xyzabc");
+  t2.set_string_value("abcxyz");
+  t3.set_string_value("abcxyzabc");
+  t4.set_string_value("abc*xyz");
+
+  EXPECT_FALSE(ValueUtil::equal(v1, t1));
+  EXPECT_FALSE(ValueUtil::equal(v2, t2));
+  EXPECT_FALSE(ValueUtil::equal(v3, t3));
+  EXPECT_FALSE(ValueUtil::equal(v4, t4));
+
+  EXPECT_TRUE(ValueUtil::equal(v1, t1, option));
+  EXPECT_FALSE(ValueUtil::equal(v1, t2, option));
+  EXPECT_TRUE(ValueUtil::equal(v1, t3, option));
+  EXPECT_FALSE(ValueUtil::equal(v1, t4, option));
+
+  EXPECT_FALSE(ValueUtil::equal(v2, t1, option));
+  EXPECT_TRUE(ValueUtil::equal(v2, t2, option));
+  EXPECT_TRUE(ValueUtil::equal(v2, t3, option));
+  EXPECT_TRUE(ValueUtil::equal(v2, t4, option));
+
+  EXPECT_FALSE(ValueUtil::equal(v3, t1, option));
+  EXPECT_FALSE(ValueUtil::equal(v3, t2, option));
+  EXPECT_TRUE(ValueUtil::equal(v3, t3, option));
+  EXPECT_FALSE(ValueUtil::equal(v3, t4, option));
+
+  EXPECT_FALSE(ValueUtil::equal(v4, t1, option));
+  EXPECT_FALSE(ValueUtil::equal(v4, t2, option));
+  EXPECT_FALSE(ValueUtil::equal(v4, t3, option));
+  EXPECT_TRUE(ValueUtil::equal(v4, t4, option));
+}
+
 TEST(UtilityTest, ValueUtilEqual_NumberValues) {
   ProtobufWkt::Value v1, v2, v3;
   v1.set_number_value(1.0);
@@ -145,6 +184,30 @@ TEST(UtilityTest, ValueUtilEqual_StructValues) {
   EXPECT_FALSE(ValueUtil::equal(v1, v4));
 }
 
+TEST(UtilityTest, ValueUtilEqual_StructValues_TreatStructAsSet) {
+  ProtobufWkt::Value string_val1, string_val2, bool_val;
+
+  string_val1.set_string_value("s1");
+  string_val2.set_string_value("s2");
+  bool_val.set_bool_value(true);
+
+  ProtobufWkt::Value v1, v2, v3, v4;
+  v1.mutable_struct_value()->mutable_fields()->insert({"f1", string_val1});
+  v1.mutable_struct_value()->mutable_fields()->insert({"f2", bool_val});
+
+  v2.mutable_struct_value()->mutable_fields()->insert({"f1", string_val1});
+  v2.mutable_struct_value()->mutable_fields()->insert({"f2", bool_val});
+
+  v3.mutable_struct_value()->mutable_fields()->insert({"f1", string_val2});
+  v3.mutable_struct_value()->mutable_fields()->insert({"f2", bool_val});
+
+  v4.mutable_struct_value()->mutable_fields()->insert({"f1", string_val1});
+
+  EXPECT_TRUE(ValueUtil::equal(v1, v2));
+  EXPECT_FALSE(ValueUtil::equal(v1, v3));
+  EXPECT_FALSE(ValueUtil::equal(v1, v4));
+}
+
 TEST(UtilityTest, ValueUtilEqual_ListValues) {
   ProtobufWkt::Value v1, v2, v3, v4;
   v1.mutable_list_value()->add_values()->set_string_value("s");
@@ -161,6 +224,33 @@ TEST(UtilityTest, ValueUtilEqual_ListValues) {
   EXPECT_TRUE(ValueUtil::equal(v1, v2));
   EXPECT_FALSE(ValueUtil::equal(v1, v3));
   EXPECT_FALSE(ValueUtil::equal(v1, v4));
+}
+
+TEST(UtilityTest, ValueUtilEqual_ListValues_TreatListAsSet) {
+  ProtobufWkt::Value v1, v2, v3, v4, v5;
+  v1.mutable_list_value()->add_values()->set_string_value("s");
+  v1.mutable_list_value()->add_values()->set_bool_value(true);
+
+  v2.mutable_list_value()->add_values()->set_string_value("s");
+  v2.mutable_list_value()->add_values()->set_bool_value(true);
+
+  v3.mutable_list_value()->add_values()->set_bool_value(true);
+  v3.mutable_list_value()->add_values()->set_string_value("s");
+
+  v4.mutable_list_value()->add_values()->set_string_value("s");
+
+  v5.mutable_list_value()->add_values()->set_number_value(10);
+  v5.mutable_list_value()->add_values()->set_bool_value(true);
+  v5.mutable_list_value()->add_values()->set_string_value("s");
+
+  EXPECT_TRUE(ValueUtil::equal(v1, v2));
+  EXPECT_TRUE(ValueUtil::equal(v1, v2, ValueUtil::Option::TreatListAsSet));
+  EXPECT_FALSE(ValueUtil::equal(v1, v3));
+  EXPECT_TRUE(ValueUtil::equal(v1, v3, ValueUtil::Option::TreatListAsSet));
+  EXPECT_FALSE(ValueUtil::equal(v1, v4));
+  EXPECT_FALSE(ValueUtil::equal(v1, v4, ValueUtil::Option::TreatListAsSet));
+  EXPECT_FALSE(ValueUtil::equal(v1, v5));
+  EXPECT_TRUE(ValueUtil::equal(v1, v5, ValueUtil::Option::TreatListAsSet));
 }
 
 TEST(UtilityTest, ValueUtilHash) {
@@ -201,6 +291,27 @@ TEST(UtilityTest, HashedValueStdHash) {
   EXPECT_EQ(set.size(), 2); // hv1 == hv2
   EXPECT_NE(set.find(hv1), set.end());
   EXPECT_NE(set.find(hv3), set.end());
+}
+
+TEST(UtilityTest, StructUtilSubset) {
+  ProtobufWkt::Struct s1, s2, s3;
+  (*s1.mutable_fields())["a"].set_string_value("1");
+  (*s2.mutable_fields())["a"].set_string_value("1");
+  (*s2.mutable_fields())["b"].set_string_value("2");
+  (*s2.mutable_fields())["c"].set_string_value("3");
+  EXPECT_TRUE(StructUtil::subset(s1, s2));
+  EXPECT_TRUE(StructUtil::subset(s1, s2, ValueUtil::Option::TreatStructAsSet));
+
+  auto s1_a = (*s1.mutable_fields())["b"].mutable_struct_value()->mutable_fields();
+  (*s1_a)["x"].set_string_value("xv");
+  (*s1_a)["y"].set_string_value("yv");
+
+  auto s2_b = (*s2.mutable_fields())["b"].mutable_struct_value()->mutable_fields();
+  (*s2_b)["x"].set_string_value("xv");
+  (*s2_b)["y"].set_string_value("yv");
+  (*s2_b)["z"].set_string_value("zv");
+  EXPECT_FALSE(StructUtil::subset(s1, s2));
+  EXPECT_TRUE(StructUtil::subset(s1, s2, ValueUtil::Option::TreatStructAsSet));
 }
 
 TEST(UtilityTest, JsonConvertSuccess) {

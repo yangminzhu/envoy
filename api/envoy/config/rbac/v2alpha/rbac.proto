@@ -2,7 +2,10 @@ syntax = "proto3";
 
 import "validate/validate.proto";
 import "envoy/api/v2/core/address.proto";
+import "envoy/api/v2/core/base.proto";
 import "envoy/api/v2/route/route.proto";
+
+import "google/protobuf/struct.proto";
 
 package envoy.config.rbac.v2alpha;
 option go_package = "v2alpha";
@@ -82,6 +85,101 @@ message Policy {
   repeated Principal principals = 2 [(validate.rules).repeated .min_items = 1];
 }
 
+// Metadata defines additional information. A Metadata matches if the metadata field is a subset of
+// the :ref:`Dynamic Metadata <envoy_api_msg_core.Metadata>`. The comparison rule of string value
+// and list value could be changed by extra options in Metadata.
+//
+// Examples:
+//
+// .. code-block:: yaml
+//
+//  metadata:
+//    filter_metadata:
+//      envoy.rbac_filter:
+//        fields:
+//          version:
+//            string_value: 'v1.*'
+//          labels:
+//            list_value:
+//              values:
+//                - string_value: a1
+//                - string_value: a2
+//  allow_prefix_suffix_string: true
+//  treat_list_as_set: true
+//
+// is matched to:
+//
+// .. code-block:: yaml
+//
+//    envoy.rbac_filter:
+//      fields:
+//        version:
+//          string:value: v1.10
+//        labels:
+//          list_value:
+//            values:
+//              - string_value: c1
+//              - string_value: a2
+//              - string_value: a1
+//
+// but not matched to:
+//
+// .. code-block:: yaml
+//
+//    envoy.rbac_filter:
+//      fields:
+//        version: # Not equal as it doesn't have prefix 'v1.'
+//          string:value: v2.10
+//        labels:
+//          list_value:
+//            values:
+//              - string_value: c1
+//              - string_value: a2
+//              - string_value: a1
+//    ---
+//    envoy.rbac_filter:
+//      fields:
+//        version:
+//          string:value: v1.10
+//        labels: # Not equal as it doesn't contain a2
+//          list_value:
+//            values:
+//              - string_value: c1
+//              - string_value: a1
+//
+message Metadata {
+  // Required. The additional metadata to match.
+  envoy.api.v2.core.Metadata metadata = 1 [(validate.rules).message .required = true];
+
+  // Option to control how to compare string value in metadata. Default is false.
+  //
+  // When true, A string begins/ends with a "*" character will additionally be treated as a
+  // suffix/prefix match.
+  //
+  // Example:
+  //   * "abc*" will match to any string with prefix "abc", like "abcxyz".
+  //   * "*abc" will match to any string with suffix "abc", like "xyzabc".
+  //   * "abc" will only match to "abc" but not any other string.
+  //
+  // When false, only exact match is used.
+  //
+  // Example:
+  //   * "*abc" will only match to "*abc" but not any other string.
+  bool allow_prefix_suffix_string = 2;
+
+  // Option to control how to compare list value in metadata. Default is false.
+  //
+  // When true, A list value is treated as set. This means the order and presence doesn't matter.
+  // Example:
+  //   * ["a", "b"] will match to ["x", "b", "a", "y"].
+  //   * [] will match to any list.
+  //
+  // When false, only exact match is used.
+  // Example:
+  //   * ["a", "b"] will only match to ["a", "b"] but not any other list.
+  bool treat_list_as_set = 3;
+}
+
 // Permission defines an action (or actions) that a principal can take.
 message Permission {
 
@@ -111,6 +209,9 @@ message Permission {
 
     // A port number that describes the destination port connecting to.
     uint32 destination_port = 6 [(validate.rules).uint32.lte = 65535];
+
+    // A metadata that describes additional information about the request.
+    Metadata metadata = 7;
   }
 }
 
@@ -150,5 +251,8 @@ message Principal {
 
     // A header (or psuedo-header such as :path or :method) on the incoming HTTP request.
     envoy.api.v2.route.HeaderMatcher header = 6;
+
+    // A metadata that describes additional information about the principal.
+    Metadata metadata = 7;
   }
 }
