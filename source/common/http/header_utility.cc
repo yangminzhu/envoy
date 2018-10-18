@@ -80,7 +80,17 @@ bool HeaderUtility::matchHeaders(const Http::HeaderMap& request_headers,
 
 bool HeaderUtility::matchHeaders(const Http::HeaderMap& request_headers,
                                  const HeaderData& header_data) {
-  const Http::HeaderEntry* header = request_headers.get(header_data.name_);
+  const Http::HeaderEntry* header = nullptr;
+  // First try to match against inline headers.
+  request_headers.lookup(header_data.name_, &header);
+  if (header == nullptr) {
+    // If no inline headers found, then try to match against other headers.
+    header = request_headers.get(header_data.name_);
+    if (header == nullptr) {
+      return header_data.invert_match_ &&
+             header_data.header_match_type_ == HeaderMatchType::Present;
+    }
+  }
 
   if (header == nullptr) {
     return header_data.invert_match_ && header_data.header_match_type_ == HeaderMatchType::Present;

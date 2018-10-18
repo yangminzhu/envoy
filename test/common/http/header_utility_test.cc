@@ -193,6 +193,28 @@ name: match-header-B
   EXPECT_FALSE(HeaderUtility::matchHeaders(unmatching_headers_4, header_data));
 }
 
+TEST(MatchHeadersTest, InlineHeaderMatch) {
+  TestHeaderMapImpl headers{{"other-header", "b"}};
+  std::string host("www.example.com");
+  headers.insertHost().value().setReference(host);
+
+  const std::string yamlA = R"EOF(
+name: Host
+exact_match: www.example.com
+  )EOF";
+
+  const std::string yamlB = R"EOF(
+name: other-header
+exact_match: b
+  )EOF";
+
+  std::vector<HeaderUtility::HeaderData> header_data;
+  header_data.push_back(HeaderUtility::HeaderData(parseHeaderMatcherFromYaml(yamlA)));
+  header_data.push_back(HeaderUtility::HeaderData(parseHeaderMatcherFromYaml(yamlB)));
+  EXPECT_TRUE(HeaderUtility::matchHeaders(headers, header_data));
+  EXPECT_TRUE(HeaderUtility::matchHeaders(headers, header_data));
+}
+
 TEST(MatchHeadersTest, HeaderPresence) {
   TestHeaderMapImpl matching_headers{{"match-header", "value"}};
   TestHeaderMapImpl unmatching_headers{{"other-header", "value"}};
