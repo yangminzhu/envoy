@@ -165,6 +165,16 @@ REPOSITORY_LOCATIONS = dict(
         # 2019-07-01
         urls = ["https://github.com/google/jwt_verify_lib/archive/6356535ae83a3f1820b6b06dae80cd6a0a03e7f2.tar.gz"],
     ),
+    com_google_googleapis = dict(
+        sha256 = "ac73994c292ea78556e818af35bceaf59bc80725d09a014f07d4d8f8913cf85a",
+        strip_prefix = "googleapis-9a02c5acecb43f38fae4fa52c6420f21c335b888",
+        urls = ["https://github.com/googleapis/googleapis/archive/9a02c5acecb43f38fae4fa52c6420f21c335b888.tar.gz"],
+    ),
+    com_google_cel_cpp = dict(
+        sha256 = "7e4522bae3b2984f8cdea33bc6232c6ee428c532aa1b3f45ae866bc165061c1b",
+        strip_prefix = "cel-cpp-c384f6ea9acbb67cad70ced7d5606b9d97dc02a3",
+        urls = ["https://github.com/google/cel-cpp/archive/c384f6ea9acbb67cad70ced7d5606b9d97dc02a3.zip"],
+    ),
     com_github_nodejs_http_parser = dict(
         sha256 = "ef26268c54c8084d17654ba2ed5140bffeffd2a040a895ffb22a6cca3f6c613f",
         strip_prefix = "http-parser-2.9.0",

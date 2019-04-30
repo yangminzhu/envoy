@@ -149,6 +149,46 @@ cc_proto_library(
     deps = ["@com_github_grpc_grpc//src/proto/grpc/health/v1:_health_proto_only"],
 )
 
+cc_proto_library(
+    name = "cc_expr_v1alpha1_proto",
+    deps = ["@com_google_googleapis//google/api/expr/v1alpha1:syntax_proto"],
+)
+
+cc_proto_library(
+    name = "cc_expr_v1beta1_proto",
+    deps = ["@com_google_googleapis//google/api/expr/v1beta1:eval_proto"],
+)
+
+cc_proto_library(
+    name = "cc_rpc_code_proto",
+    deps = ["@com_google_googleapis//google/rpc:code_proto"],
+)
+
+cc_proto_library(
+    name = "cc_rpc_status_proto",
+    deps = ["@com_google_googleapis//google/rpc:status_proto"],
+)
+
+cc_proto_library(
+    name = "cc_expr_v1alpha1",
+    deps = ["@com_google_googleapis//google/api/expr/v1alpha1:syntax_proto"],
+)
+
+cc_proto_library(
+    name = "cc_expr_v1beta1",
+    deps = ["@com_google_googleapis//google/api/expr/v1beta1:eval_proto"],
+)
+
+cc_proto_library(
+    name = "cc_rpc_code",
+    deps = ["@com_google_googleapis//google/rpc:code_proto"],
+)
+
+cc_proto_library(
+    name = "cc_rpc_status",
+    deps = ["@com_google_googleapis//google/rpc:status_proto"],
+)
+
 config_setting(
     name = "enable_exported_symbols",
     values = {"define": "exported_symbols=enabled"},
