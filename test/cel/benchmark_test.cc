@@ -1,8 +1,7 @@
+#include "benchmark/benchmark.h"
 #include "common/protobuf/protobuf.h"
+#include "google/protobuf/text_format.h"
 #include "google/api/expr/v1alpha1/syntax.pb.h"
-
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -17,9 +16,13 @@
 
 #pragma GCC diagnostic pop
 
-namespace Envoy {
+#include "common/common/assert.h"
 
-using ::google::protobuf::Arena;
+namespace Envoy {
+namespace {
+
+using google::protobuf::Arena;
+using google::protobuf::TextFormat;
 using google::api::expr::v1alpha1::Expr;
 using google::api::expr::v1alpha1::SourceInfo;
 using google::api::expr::runtime::CelExpressionBuilder;
@@ -27,12 +30,9 @@ using google::api::expr::runtime::Activation;
 using google::api::expr::runtime::CelValue;
 using google::api::expr::runtime::CreateCelExpressionBuilder;
 using google::api::expr::runtime::util::IsOk;
+using google::api::expr::runtime::CelExpression;
 
-// DEMO integrating CEL engine with Envoy
-// To run this test, simply run: bazel test  //test/cel:cel_test
-
-// Simple end-to-end test, which also serves as usage example.
-TEST(EndToEndTest, Simple) {
+static void CEL(benchmark::State& state) {
   // AST CEL equivalent of "1+var"
   constexpr char kExpr0[] = R"(
     call_expr: <
@@ -48,22 +48,23 @@ TEST(EndToEndTest, Simple) {
         >
       >
     >
-)";
+  )";
 
   Expr expr;
   SourceInfo source_info;
-  Protobuf::TextFormat::ParseFromString(kExpr0, &expr);
+
+  TextFormat::ParseFromString(kExpr0, &expr);
 
   // Obtain CEL Expression builder.
   std::unique_ptr<CelExpressionBuilder> builder = CreateCelExpressionBuilder();
 
   // Builtin registration.
-  ASSERT_TRUE(IsOk(RegisterBuiltinFunctions(builder->GetRegistry())));
+  RELEASE_ASSERT(IsOk(RegisterBuiltinFunctions(builder->GetRegistry())), "");
 
   // Create CelExpression from AST (Expr object).
   auto cel_expression_status = builder->CreateExpression(&expr, &source_info);
 
-  ASSERT_TRUE(IsOk(cel_expression_status));
+  RELEASE_ASSERT(IsOk(cel_expression_status), "");
 
   auto cel_expression = std::move(cel_expression_status.ValueOrDie());
 
@@ -74,15 +75,29 @@ TEST(EndToEndTest, Simple) {
 
   Arena arena;
 
-  // Run evaluation.
-  auto eval_status = cel_expression->Evaluate(activation, &arena);
+  for (auto _ : state) {
+    // Run evaluation.
+    auto eval_status = cel_expression->Evaluate(activation, &arena);
 
-  ASSERT_TRUE(IsOk(eval_status));
+    RELEASE_ASSERT(IsOk(eval_status), "");
 
-  CelValue result = eval_status.ValueOrDie();
+    CelValue result = eval_status.ValueOrDie();
+    RELEASE_ASSERT(result.IsInt64(), "");
+    RELEASE_ASSERT(result.Int64OrDie() == 2, "");
+  }
+}
+BENCHMARK(CEL);
 
-  ASSERT_TRUE(result.IsInt64());
-  EXPECT_EQ(result.Int64OrDie(), 2);
+}  // namespace
+}  // namespace Envoy
+
+// Boilerplate main(), which discovers benchmarks in the same file and runs them.
+int main(int argc, char** argv) {
+  benchmark::Initialize(&argc, argv);
+
+  if (benchmark::ReportUnrecognizedArguments(argc, argv)) {
+    return 1;
+  }
+  benchmark::RunSpecifiedBenchmarks();
 }
 
-}

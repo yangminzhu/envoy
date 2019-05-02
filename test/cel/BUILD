@@ -2,6 +2,7 @@ licenses(["notice"])  # Apache 2
 
 load(
     "//bazel:envoy_build_system.bzl",
+    "envoy_cc_test_binary",
     "envoy_cc_test",
     "envoy_cc_test_library",
     "envoy_package",
@@ -26,4 +27,26 @@ envoy_cc_test(
     deps = [
         "//source/common/protobuf",
     ]
+)
+
+envoy_cc_test_binary(
+    name = "benchmark_test",
+    srcs = [
+        "benchmark_test.cc",
+    ],
+    external_deps = [
+        "abseil_strings",
+        "benchmark",
+        "cc_expr_v1beta1",
+        "cc_expr_v1alpha1",
+        "cel_eval_activation",
+        "cel_eval_builtin_func_registrar",
+        "cel_eval_cel_expr_builder_factory",
+        "cel_eval_cel_expression",
+        "cel_eval_cel_value",
+    ],
+    deps = [
+        "//source/common/protobuf",
+        "//source/common/common:assert_lib",
+    ],
 )
