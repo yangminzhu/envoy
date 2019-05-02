@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package cel;
+
+message AttributesContext {
+  map<string, string> headers = 1;
+  string sni = 2;
+  uint32 port = 3;
+  bool tls = 4;
+  repeated int32 weighet = 5;
+  repeated string whitelist = 6;
+  repeated string blacklist = 7;
+}

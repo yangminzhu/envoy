@@ -751,6 +751,10 @@ def _com_google_cel_cpp():
         actual = "@com_google_cel_cpp//eval/public:activation",
     )
     native.bind(
+        name = "cel_eval_activation_bind_helper",
+        actual = "@com_google_cel_cpp//eval/public:activation_bind_helper",
+    )
+    native.bind(
         name = "cel_eval_builtin_func_registrar",
         actual = "@com_google_cel_cpp//eval/public:builtin_func_registrar",
     )
