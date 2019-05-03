@@ -329,6 +329,272 @@ call_expr: <
 )";
 }
 
+std::string CELAstFlattenedMap() {
+  /*
+ !(ip in ["10.0.1.4", "10.0.1.5", "10.0.1.6"]) &&
+   (
+    (path.startsWith("v1") && token in ["v1", "v2", "admin"]) ||
+    (path.startsWith("v2") && token in ["v2", "admin"]) ||
+    (path.startsWith("/admin") && token == "admin" && ip in ["10.0.1.1", "10.0.1.2", "10.0.1.3"])
+   )
+*/
+  return R"(
+id: 43
+call_expr: <
+  function: "_&&_"
+  args: <
+    id: 1
+    call_expr: <
+      function: "!_"
+      args: <
+        id: 3
+        call_expr: <
+          function: "@in"
+          args: <
+            id: 2
+            ident_expr: <
+              name: "ip"
+            >
+          >
+          args: <
+            id: 4
+            list_expr: <
+              elements: <
+                id: 5
+                const_expr: <
+                  string_value: "10.0.1.4"
+                >
+              >
+              elements: <
+                id: 6
+                const_expr: <
+                  string_value: "10.0.1.5"
+                >
+              >
+              elements: <
+                id: 7
+                const_expr: <
+                  string_value: "10.0.1.6"
+                >
+              >
+            >
+          >
+        >
+      >
+    >
+  >
+  args: <
+    id: 42
+    call_expr: <
+      function: "_||_"
+      args: <
+        id: 27
+        call_expr: <
+          function: "_||_"
+          args: <
+            id: 17
+            call_expr: <
+              function: "_&&_"
+              args: <
+                id: 9
+                call_expr: <
+                  target: <
+                    id: 8
+                    ident_expr: <
+                      name: "path"
+                    >
+                  >
+                  function: "startsWith"
+                  args: <
+                    id: 10
+                    const_expr: <
+                      string_value: "v1"
+                    >
+                  >
+                >
+              >
+              args: <
+                id: 12
+                call_expr: <
+                  function: "@in"
+                  args: <
+                    id: 11
+                    ident_expr: <
+                      name: "token"
+                    >
+                  >
+                  args: <
+                    id: 13
+                    list_expr: <
+                      elements: <
+                        id: 14
+                        const_expr: <
+                          string_value: "v1"
+                        >
+                      >
+                      elements: <
+                        id: 15
+                        const_expr: <
+                          string_value: "v2"
+                        >
+                      >
+                      elements: <
+                        id: 16
+                        const_expr: <
+                          string_value: "admin"
+                        >
+                      >
+                    >
+                  >
+                >
+              >
+            >
+          >
+          args: <
+            id: 26
+            call_expr: <
+              function: "_&&_"
+              args: <
+                id: 19
+                call_expr: <
+                  target: <
+                    id: 18
+                    ident_expr: <
+                      name: "path"
+                    >
+                  >
+                  function: "startsWith"
+                  args: <
+                    id: 20
+                    const_expr: <
+                      string_value: "v2"
+                    >
+                  >
+                >
+              >
+              args: <
+                id: 22
+                call_expr: <
+                  function: "@in"
+                  args: <
+                    id: 21
+                    ident_expr: <
+                      name: "token"
+                    >
+                  >
+                  args: <
+                    id: 23
+                    list_expr: <
+                      elements: <
+                        id: 24
+                        const_expr: <
+                          string_value: "v2"
+                        >
+                      >
+                      elements: <
+                        id: 25
+                        const_expr: <
+                          string_value: "admin"
+                        >
+                      >
+                    >
+                  >
+                >
+              >
+            >
+          >
+        >
+      >
+      args: <
+        id: 41
+        call_expr: <
+          function: "_&&_"
+          args: <
+            id: 34
+            call_expr: <
+              function: "_&&_"
+              args: <
+                id: 29
+                call_expr: <
+                  target: <
+                    id: 28
+                    ident_expr: <
+                      name: "path"
+                    >
+                  >
+                  function: "startsWith"
+                  args: <
+                    id: 30
+                    const_expr: <
+                      string_value: "/admin"
+                    >
+                  >
+                >
+              >
+              args: <
+                id: 32
+                call_expr: <
+                  function: "_==_"
+                  args: <
+                    id: 31
+                    ident_expr: <
+                      name: "token"
+                    >
+                  >
+                  args: <
+                    id: 33
+                    const_expr: <
+                      string_value: "admin"
+                    >
+                  >
+                >
+              >
+            >
+          >
+          args: <
+            id: 36
+            call_expr: <
+              function: "@in"
+              args: <
+                id: 35
+                ident_expr: <
+                  name: "ip"
+                >
+              >
+              args: <
+                id: 37
+                list_expr: <
+                  elements: <
+                    id: 38
+                    const_expr: <
+                      string_value: "10.0.1.1"
+                    >
+                  >
+                  elements: <
+                    id: 39
+                    const_expr: <
+                      string_value: "10.0.1.2"
+                    >
+                  >
+                  elements: <
+                    id: 40
+                    const_expr: <
+                      string_value: "10.0.1.3"
+                    >
+                  >
+                >
+              >
+            >
+          >
+        >
+      >
+    >
+  >
+>
+
+)";
+}
+
 std::string RBACFilterConfig() {
 /*
 apiVersion: "rbac.istio.io/v1alpha1"

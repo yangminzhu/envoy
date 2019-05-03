@@ -136,6 +136,41 @@ static void CEL(benchmark::State& state) {
 }
 BENCHMARK(CEL);
 
+static void CEL_FlattenedMap(benchmark::State& state) {
+  Expr expr;
+  SourceInfo source_info;
+  TextFormat::ParseFromString(CELAstFlattenedMap(), &expr);
+
+  // Obtain CEL Expression builder.
+  std::unique_ptr<CelExpressionBuilder> builder = CreateCelExpressionBuilder();
+
+  // Builtin registration.
+  RELEASE_ASSERT(IsOk(RegisterBuiltinFunctions(builder->GetRegistry())), "");
+
+  // Create CelExpression from AST (Expr object).
+  auto cel_expression_status = builder->CreateExpression(&expr, &source_info);
+
+  RELEASE_ASSERT(IsOk(cel_expression_status), "");
+
+  auto cel_expression = std::move(cel_expression_status.ValueOrDie());
+
+  Activation activation;
+
+  cel::AttributesContext ac = AttributesContext();
+  activation.InsertValue("ip", CelValue::CreateString(&(ac.headers().at("ip"))));
+  activation.InsertValue("path", CelValue::CreateString(&(ac.headers().at("path"))));
+  activation.InsertValue("token", CelValue::CreateString(&(ac.headers().at("token"))));
+
+  Arena arena;
+  for (auto _ : state) {
+    // Run evaluation.
+    auto eval_status = cel_expression->Evaluate(activation, &arena);
+    CelValue result = eval_status.ValueOrDie();
+    RELEASE_ASSERT(result.BoolOrDie(), "");
+  }
+}
+BENCHMARK(CEL_FlattenedMap);
+
 }  // namespace
 }  // namespace Envoy
 

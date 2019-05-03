@@ -6,6 +6,7 @@
 
 cel::AttributesContext AttributesContext();
 std::string CELAst();
+std::string CELAstFlattenedMap();
 std::string RBACFilterConfig();
 
 #endif //ENVOY_CEL_AST_H
