@@ -39,7 +39,6 @@ using google::api::expr::runtime::Activation;
 using google::api::expr::runtime::BindProtoToActivation;
 using google::api::expr::runtime::CelValue;
 using google::api::expr::runtime::CreateCelExpressionBuilder;
-using google::api::expr::runtime::util::IsOk;
 using google::api::expr::runtime::CelExpression;
 using Envoy::Extensions::Filters::Common::RBAC::RoleBasedAccessControlEngineImpl;
 
@@ -81,7 +80,7 @@ static void Native(benchmark::State& state) {
 BENCHMARK(Native);
 
 static void RBAC(benchmark::State& state) {
-  envoy::config::rbac::v2alpha::RBAC filterConfig;
+  envoy::config::rbac::v2::RBAC filterConfig;
   TextFormat::ParseFromString(RBACFilterConfig(), &filterConfig);
 
   // Use headers to mock the AttributesContext()
@@ -111,12 +110,12 @@ static void CEL(benchmark::State& state) {
   std::unique_ptr<CelExpressionBuilder> builder = CreateCelExpressionBuilder();
 
   // Builtin registration.
-  RELEASE_ASSERT(IsOk(RegisterBuiltinFunctions(builder->GetRegistry())), "");
+  RELEASE_ASSERT(RegisterBuiltinFunctions(builder->GetRegistry()).ok(), "");
 
   // Create CelExpression from AST (Expr object).
   auto cel_expression_status = builder->CreateExpression(&expr, &source_info);
 
-  RELEASE_ASSERT(IsOk(cel_expression_status), "");
+  RELEASE_ASSERT(cel_expression_status.ok(), "");
 
   auto cel_expression = std::move(cel_expression_status.ValueOrDie());
 
@@ -124,7 +123,7 @@ static void CEL(benchmark::State& state) {
 
   cel::AttributesContext ac = AttributesContext();
   Arena ac_arena;
-  BindProtoToActivation(&ac, &ac_arena, &activation);
+  RELEASE_ASSERT(BindProtoToActivation(&ac, &ac_arena, &activation).ok(), "");
 
   Arena arena;
   for (auto _ : state) {
@@ -145,12 +144,12 @@ static void CEL_FlattenedMap(benchmark::State& state) {
   std::unique_ptr<CelExpressionBuilder> builder = CreateCelExpressionBuilder();
 
   // Builtin registration.
-  RELEASE_ASSERT(IsOk(RegisterBuiltinFunctions(builder->GetRegistry())), "");
+  RELEASE_ASSERT(RegisterBuiltinFunctions(builder->GetRegistry()).ok(), "");
 
   // Create CelExpression from AST (Expr object).
   auto cel_expression_status = builder->CreateExpression(&expr, &source_info);
 
-  RELEASE_ASSERT(IsOk(cel_expression_status), "");
+  RELEASE_ASSERT(cel_expression_status.ok(), "");
 
   auto cel_expression = std::move(cel_expression_status.ValueOrDie());
 

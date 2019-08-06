@@ -11,28 +11,31 @@ load(
 
 envoy_package()
 
+envoy_proto_library(
+    name = "cel_ast_proto",
+    srcs = [":cel_ast.proto"],
+    external_deps = [
+        "@com_google_googleapis//google/api/expr/v1alpha1:syntax_cc_proto",
+        "@com_google_googleapis//google/api/expr/v1alpha1:syntax_proto",
+        "@com_google_googleapis//google/api/expr/v1alpha1:syntax_py_proto",
+    ],
+)
+
 envoy_cc_test(
     name = "cel_test",
     srcs = ["cel_test.cc"],
     external_deps = [
         "abseil_strings",
         "abseil_time",
-        "cc_expr_v1beta1",
-        "cc_expr_v1alpha1",
-        "cel_eval_activation",
-        "cel_eval_builtin_func_registrar",
-        "cel_eval_cel_expr_builder_factory",
-        "cel_eval_cel_expression",
-        "cel_eval_cel_value",
     ],
     deps = [
+        ":cel_ast_proto_cc",
         "//source/common/protobuf",
+        "@com_google_cel_cpp//eval/public:builtin_func_registrar",
+        "@com_google_cel_cpp//eval/public:cel_expr_builder_factory",
+        "@com_google_cel_cpp//eval/public:cel_expression",
+        "@com_google_cel_cpp//eval/public:cel_value",
     ]
-)
-
-envoy_proto_library(
-    name = "cel_ast_proto",
-    srcs = [":cel_ast.proto"],
 )
 
 envoy_cc_test_library(
@@ -52,14 +55,6 @@ envoy_cc_test_binary(
     external_deps = [
         "abseil_strings",
         "benchmark",
-        "cc_expr_v1beta1",
-        "cc_expr_v1alpha1",
-        "cel_eval_activation",
-        "cel_eval_activation_bind_helper",
-        "cel_eval_builtin_func_registrar",
-        "cel_eval_cel_expr_builder_factory",
-        "cel_eval_cel_expression",
-        "cel_eval_cel_value",
     ],
     deps = [
         ":cel_ast",
@@ -70,5 +65,10 @@ envoy_cc_test_binary(
         "//test/mocks/network:network_mocks",
         "//test/mocks/ssl:ssl_mocks",
         "//test/test_common:utility_lib",
+        "@com_google_cel_cpp//eval/public:activation_bind_helper",
+        "@com_google_cel_cpp//eval/public:builtin_func_registrar",
+        "@com_google_cel_cpp//eval/public:cel_expr_builder_factory",
+        "@com_google_cel_cpp//eval/public:cel_expression",
+        "@com_google_cel_cpp//eval/public:cel_value",
     ],
 )

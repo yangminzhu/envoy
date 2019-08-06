@@ -24,10 +24,10 @@ REPOSITORY_LOCATIONS = dict(
         urls = ["https://commondatastorage.googleapis.com/chromium-boringssl-docs/fips/boringssl-66005f41fbc3529ffe8d007708756720529da20d.tar.xz"],
     ),
     com_google_absl = dict(
-        sha256 = "7ddf863ddced6fa5bf7304103f9c7aa619c20a2fcf84475512c8d3834b9d14fa",
-        strip_prefix = "abseil-cpp-61c9bf3e3e1c28a4aa6d7f1be4b37fd473bb5529",
-        # 2019-06-05
-        urls = ["https://github.com/abseil/abseil-cpp/archive/61c9bf3e3e1c28a4aa6d7f1be4b37fd473bb5529.tar.gz"],
+        sha256 = "b3e1b8e75bb221da8b2422032c3f00adc7bc78d0cee3a27cda86da1ca684288f",
+        strip_prefix = "abseil-cpp-c5c4db4f5191fe5e76cbf68dcc71fb28702f7d2b",
+        # 2019-08-05
+        urls = ["https://github.com/abseil/abseil-cpp/archive/c5c4db4f5191fe5e76cbf68dcc71fb28702f7d2b.tar.gz"],
     ),
     com_github_apache_thrift = dict(
         sha256 = "7d59ac4fdcb2c58037ebd4a9da5f9a49e3e034bf75b3f26d9fe48ba3d8806e6b",
@@ -165,15 +165,15 @@ REPOSITORY_LOCATIONS = dict(
         # 2019-07-01
         urls = ["https://github.com/google/jwt_verify_lib/archive/6356535ae83a3f1820b6b06dae80cd6a0a03e7f2.tar.gz"],
     ),
-    com_google_googleapis = dict(
-        sha256 = "ac73994c292ea78556e818af35bceaf59bc80725d09a014f07d4d8f8913cf85a",
-        strip_prefix = "googleapis-9a02c5acecb43f38fae4fa52c6420f21c335b888",
-        urls = ["https://github.com/googleapis/googleapis/archive/9a02c5acecb43f38fae4fa52c6420f21c335b888.tar.gz"],
+    com_google_re2 = dict(
+        sha256 = "f31db9cd224d018a7e4fe88ef84aaa874b0b3ed91d4d98ee5a1531101d3fdc64",
+        strip_prefix = "re2-87e2ad45e7b18738e1551474f7ee5886ff572059",
+        urls = ["https://github.com/google/re2/archive/87e2ad45e7b18738e1551474f7ee5886ff572059.tar.gz"],
     ),
     com_google_cel_cpp = dict(
-        sha256 = "7e4522bae3b2984f8cdea33bc6232c6ee428c532aa1b3f45ae866bc165061c1b",
-        strip_prefix = "cel-cpp-c384f6ea9acbb67cad70ced7d5606b9d97dc02a3",
-        urls = ["https://github.com/google/cel-cpp/archive/c384f6ea9acbb67cad70ced7d5606b9d97dc02a3.zip"],
+        sha256 = "a0e6a6ccf25c1e57ba3c7a997edd9279f8e0b0112e0a3ac705a5568fa32792fc",
+        strip_prefix = "cel-cpp-d56f26adb53d0f41508a909d15e74d9ffb0e8a6c",
+        urls = ["https://github.com/google/cel-cpp/archive/d56f26adb53d0f41508a909d15e74d9ffb0e8a6c.tar.gz"],
     ),
     com_github_nodejs_http_parser = dict(
         sha256 = "ef26268c54c8084d17654ba2ed5140bffeffd2a040a895ffb22a6cca3f6c613f",

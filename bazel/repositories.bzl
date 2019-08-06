@@ -153,9 +153,9 @@ def envoy_dependencies(skip_targets = []):
     _com_lightstep_tracer_cpp()
     _io_opentracing_cpp()
     _net_zlib()
+    _repository_impl("com_google_re2")
+    _repository_impl("com_google_cel_cpp")
     _repository_impl("bazel_toolchains")
-    _com_google_googleapis()
-    _com_google_cel_cpp()
 
     _python_deps()
     _cc_deps()
@@ -646,129 +646,6 @@ def _com_github_google_jwt_verify():
     native.bind(
         name = "jwt_verify_lib",
         actual = "@com_github_google_jwt_verify//:jwt_verify_lib",
-    )
-
-def _com_google_googleapis():
-    http_archive(
-        name = "com_google_api_codegen",
-        urls = ["https://github.com/googleapis/gapic-generator/archive/96c3c5a4c8397d4bd29a6abce861547a271383e1.zip"],
-        strip_prefix = "gapic-generator-96c3c5a4c8397d4bd29a6abce861547a271383e1",
-        sha256 = "c8ff36df84370c3a0ffe141ec70c3633be9b5f6cc9746b13c78677e9d5566915",
-    )
-
-    # Required to use embedded BUILD.bazel file in googleapis/google/rpc
-    git_repository(
-        name = "io_grpc_grpc_java",
-        remote = "https://github.com/grpc/grpc-java.git",
-        tag = "v1.13.1",
-    )
-
-    http_archive(
-        name = "com_google_googleapis",
-        build_file_content = """
-cc_proto_library(
-    name = 'cc_rpc_status',
-    deps = ['//google/rpc:status_proto'],
-    visibility = ['//visibility:public'],
-)
-cc_proto_library(
-    name = 'cc_rpc_code',
-    deps = ['//google/rpc:code_proto'],
-    visibility = ['//visibility:public'],
-)
-cc_proto_library(
-    name = 'cc_type_money',
-    deps = ['//google/type:money_proto'],
-    visibility = ['//visibility:public'],
-)
-cc_proto_library(
-    name = 'cc_expr_v1alpha1',
-    deps = ['//google/api/expr/v1alpha1:syntax_proto'],
-    visibility = ['//visibility:public'],
-)
-cc_proto_library(
-    name = 'cc_expr_v1beta1',
-    deps = ['//google/api/expr/v1beta1:eval_proto'],
-    visibility = ['//visibility:public'],
-)
-""",
-        strip_prefix = "googleapis-9a02c5acecb43f38fae4fa52c6420f21c335b888",
-        urls = ["https://github.com/googleapis/googleapis/archive/9a02c5acecb43f38fae4fa52c6420f21c335b888.tar.gz"],
-    )
-    #_repository_impl("com_google_googleapis")
-
-    native.bind(
-        name = "cc_expr_v1alpha1",
-        actual = "@envoy//bazel:cc_expr_v1alpha1_proto",
-    )
-    native.bind(
-        name = "cc_expr_v1beta1",
-        actual = "@envoy//bazel:cc_expr_v1beta1_proto",
-    )
-    native.bind(
-        name = "cc_rpc_code",
-        actual = "@envoy//bazel:cc_rpc_code_proto",
-    )
-    native.bind(
-        name = "cc_rpc_status",
-        actual = "@envoy//bazel:cc_rpc_status_proto",
-    )
-
-def _com_google_cel_cpp():
-    # gflags
-    http_archive(
-        name = "com_github_gflags_gflags",
-        sha256 = "6e16c8bc91b1310a44f3965e616383dbda48f83e8c1eaa2370a215057b00cabe",
-        strip_prefix = "gflags-77592648e3f3be87d6c7123eb81cbad75f9aef5a",
-        urls = [
-            "https://mirror.bazel.build/github.com/gflags/gflags/archive/77592648e3f3be87d6c7123eb81cbad75f9aef5a.tar.gz",
-            "https://github.com/gflags/gflags/archive/77592648e3f3be87d6c7123eb81cbad75f9aef5a.tar.gz",
-        ],
-    )
-
-    # glog
-    http_archive(
-        name = "com_google_glog",
-        sha256 = "1ee310e5d0a19b9d584a855000434bb724aa744745d5b8ab1855c85bff8a8e21",
-        strip_prefix = "glog-028d37889a1e80e8a07da1b8945ac706259e5fd8",
-        urls = [
-            "https://mirror.bazel.build/github.com/google/glog/archive/028d37889a1e80e8a07da1b8945ac706259e5fd8.tar.gz",
-            "https://github.com/google/glog/archive/028d37889a1e80e8a07da1b8945ac706259e5fd8.tar.gz",
-        ],
-    )
-
-    # Google RE2 (Regular Expression) C++ Library
-    http_archive(
-        name = "com_google_re2",
-        strip_prefix = "re2-master",
-        urls = ["https://github.com/google/re2/archive/master.zip"],
-    )
-
-    _repository_impl("com_google_cel_cpp")
-
-    native.bind(
-        name = "cel_eval_activation",
-        actual = "@com_google_cel_cpp//eval/public:activation",
-    )
-    native.bind(
-        name = "cel_eval_activation_bind_helper",
-        actual = "@com_google_cel_cpp//eval/public:activation_bind_helper",
-    )
-    native.bind(
-        name = "cel_eval_builtin_func_registrar",
-        actual = "@com_google_cel_cpp//eval/public:builtin_func_registrar",
-    )
-    native.bind(
-        name = "cel_eval_cel_expr_builder_factory",
-        actual = "@com_google_cel_cpp//eval/public:cel_expr_builder_factory",
-    )
-    native.bind(
-        name = "cel_eval_cel_expression",
-        actual = "@com_google_cel_cpp//eval/public:cel_expression",
-    )
-    native.bind(
-        name = "cel_eval_cel_value",
-        actual = "@com_google_cel_cpp//eval/public:cel_value",
     )
 
 def _com_github_luajit_luajit():

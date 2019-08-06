@@ -26,7 +26,6 @@ using google::api::expr::runtime::CelExpressionBuilder;
 using google::api::expr::runtime::Activation;
 using google::api::expr::runtime::CelValue;
 using google::api::expr::runtime::CreateCelExpressionBuilder;
-using google::api::expr::runtime::util::IsOk;
 
 // DEMO integrating CEL engine with Envoy
 // To run this test, simply run: bazel test  //test/cel:cel_test
@@ -58,12 +57,12 @@ TEST(EndToEndTest, Simple) {
   std::unique_ptr<CelExpressionBuilder> builder = CreateCelExpressionBuilder();
 
   // Builtin registration.
-  ASSERT_TRUE(IsOk(RegisterBuiltinFunctions(builder->GetRegistry())));
+  ASSERT_TRUE(RegisterBuiltinFunctions(builder->GetRegistry()).ok());
 
   // Create CelExpression from AST (Expr object).
   auto cel_expression_status = builder->CreateExpression(&expr, &source_info);
 
-  ASSERT_TRUE(IsOk(cel_expression_status));
+  ASSERT_TRUE(cel_expression_status.ok());
 
   auto cel_expression = std::move(cel_expression_status.ValueOrDie());
 
@@ -77,7 +76,7 @@ TEST(EndToEndTest, Simple) {
   // Run evaluation.
   auto eval_status = cel_expression->Evaluate(activation, &arena);
 
-  ASSERT_TRUE(IsOk(eval_status));
+  ASSERT_TRUE(eval_status.ok());
 
   CelValue result = eval_status.ValueOrDie();
 
