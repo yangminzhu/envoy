@@ -57,6 +57,9 @@ envoy_cc_test_binary(
         "benchmark",
     ],
     deps = [
+        "//source/extensions/filters/http/lua:lua_filter_lib",
+        "//test/mocks/thread_local:thread_local_mocks",
+        "//test/mocks/upstream:upstream_mocks",
         ":cel_ast",
         ":cel_ast_proto_cc",
         "//source/common/protobuf",

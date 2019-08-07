@@ -334,6 +334,9 @@ public:
   Http::FilterTrailersStatus decodeTrailers(Http::HeaderMap& trailers) override {
     return doTrailers(request_stream_wrapper_, trailers);
   }
+  FilterCallbacks& getDecoderCallbacks() {
+    return decoder_callbacks_;
+  }
   void setDecoderFilterCallbacks(Http::StreamDecoderFilterCallbacks& callbacks) override {
     decoder_callbacks_.callbacks_ = &callbacks;
   }
